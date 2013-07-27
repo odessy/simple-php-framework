@@ -1,22 +1,22 @@
-<?PHP
+<?php
+
+	//MySQL PDO (https://github.com/maxfierke/arcanecms/blob/master/includes/class.database.php) replacement written by Max Fierke.
+
     class Database
     {
         // Singleton object. Leave $me alone.
         private static $me;
 
-        public $readDB;
-        public $writeDB;
-
-        public $readHost;
-        public $writeHost;
+        public $DB;
+         
+        public $type;
+         
+        public $Host;
 
         public $name;
 
-        public $readUsername;
-        public $writeUsername;
-
-        public $readPassword;
-        public $writePassword;
+        public $Username;
+		public $Password;
 
         public $onError; // Can be '', 'die', or 'redirect'
         public $emailOnError;
@@ -31,144 +31,149 @@
         // Singleton constructor
         private function __construct()
         {
-            $this->readHost      = Config::get('dbReadHost');
-            $this->writeHost     = Config::get('dbWriteHost');
-            $this->name          = Config::get('dbName');
-            $this->readUsername  = Config::get('dbReadUsername');
-            $this->writeUsername = Config::get('dbWriteUsername');
-            $this->readPassword  = Config::get('dbReadPassword');
-            $this->writePassword = Config::get('dbWritePassword');
-            $this->onError       = Config::get('dbOnError');
-            $this->emailOnError  = Config::get('dbEmailOnError');
-
-            $this->readDB  = false;
-            $this->writeDB = false;
+            $this->type = Config::get('dbType');
+            $this->name = Config::get('dbName');
+            $this->onError = Config::get('dbOnError');
+            $this->emailOnError = Config::get('dbEmailOnError');
             $this->queries = array();
+            // MySQL specific stuff
+            if($this->type=='mysql') {
+                $this->writeHost = Config::get('dbHost');
+                $this->Username = Config::get('dbUsername');
+                $this->Password = Config::get('dbPassword');
+                $this->DB = false;
+            } else if($this->type=='sqlite') {
+				$this->DB = false;
+			} else {
+				die('Unsupported database type specified in class.config.php');
+			}
         }
 
         // Get Singleton object
-        public static function getDatabase()
+        public static function getInstance()
         {
             if(is_null(self::$me))
                 self::$me = new Database();
             return self::$me;
         }
-
-        // Do we have a valid read-only database connection?
-        public function isReadConnected()
+        public function __wakeup()
         {
-            return is_resource($this->readDB) && get_resource_type($this->readDB) == 'mysql link';
+         $this->Connect();
+        }
+        public function __sleep()
+        {
+             if(is_object($this->DB)) {
+              $this->DB = null;
+             }
+             return array_keys(get_object_vars($this));
         }
 
         // Do we have a valid read/write database connection?
-        public function isWriteConnected()
+        public function isConnected()
         {
-            return is_resource($this->writeDB) && get_resource_type($this->writeDB) == 'mysql link';
+            return is_object($this->DB);
         }
+
+		// Are we using MySQL?
+		public function isMySQL()
+		{
+			if($this->type=='mysql') return true;
+			else return false;
+		}
 
         // Do we have a valid database connection and have we selected a database?
         public function databaseSelected()
         {
-            if(!$this->isReadConnected()) return false;
-            $result = mysql_list_tables($this->name, $this->readDB);
-            return is_resource($result);
+            if(!$this->isConnected()) return false;
+			if($this->isMySQL()) {
+					$result = $this->readDB->query("SHOW TABLES FROM $this->name");
+			} else {
+				$this->Connect();
+				$result = $this->readDB->query("SELECT name FROM sqlite_master WHERE type = 'table'");
+			}
+			return is_object($result);
         }
 
-        public function readConnect()
+        public function Connect()
         {
-            $this->readDB = mysql_connect($this->readHost, $this->readUsername, $this->readPassword) or $this->notify();
-            if($this->readDB === false) return false;
-
-            if(!empty($this->name))
-                mysql_select_db($this->name, $this->readDB) or $this->notify();
-
-            return $this->isReadConnected();
+			if($this->isMySQL()) {
+				$this->DB = new PDO("mysql:dbname=$this->name;host=$this->Host", $this->Username, $this->Password) or $this->notify();
+				if($this->DB === false) return false;
+				$this->DB->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+			} else {
+				$this->DB = new PDO("sqlite:".DOC_ROOT.DS."db".DS."$this->name.sqlite") or $this->notify();
+				if($this->DB === false) return false;
+				$this->DB->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+			}
+            return $this->isConnected();
         }
 
-        public function writeConnect()
+        public function query($sql, $args_to_prepare = null)
         {
-            $this->writeDB = mysql_connect($this->writeHost, $this->writeUsername, $this->writePassword) or $this->notify();
-            if($this->writeDB === false) return false;
-
-            if(!empty($this->name))
-                mysql_select_db($this->name, $this->writeDB) or $this->notify();
-
-            return $this->isWriteConnected();
+			$sql = trim($sql);
+			if(!$this->isConnected()) $this->Connect();
+			$this->queries[] = $sql;	
+			$this->result = $this->DB->prepare($sql) or $this->notify();
+			$this->result->execute($args_to_prepare);
+			return $this->result;
         }
-
-        public function query($sql, $args_to_prepare = null, $exception_on_missing_args = true)
-        {
-            // Read or Write connection?
-            $sql = trim($sql);
-            if(preg_match('/^(INSERT|UPDATE|REPLACE|DELETE)/i', $sql) == 0)
-            {
-                if(!$this->isReadConnected())
-                    $this->readConnect();
-
-                $the_db = $this->readDB;
-            }
-            else
-            {
-                if(!$this->isWriteConnected())
-                    $this->writeConnect();
-
-                $the_db = $this->writeDB;
-            }
-
-            // Allow for prepared arguments. Example:
-            // query("SELECT * FROM table WHERE id = :id:", array('id' => $some_val));
-            if(is_array($args_to_prepare))
-            {
-                foreach($args_to_prepare as $name => $val)
-                {
-					if(!is_int($val)) $val = $this->quote($val);
-                    $sql = str_replace(":$name:", $val, $sql, $count);
-                    if($exception_on_missing_args && (0 == $count))
-                        throw new Exception(":$name: was not found in prepared SQL query.");
-                }
-            }
-
-            $this->queries[] = $sql;
-            $this->result = mysql_query($sql, $the_db) or $this->notify();
-            return $this->result;
-        }
-
+		
+		public function showColumns($arg)
+		{
+			if($this->isMySQL())
+			return $this->query("SHOW COLUMNS FROM $arg");
+			else return $this->query("PRAGMA table_info($arg);");
+		}
         // Returns the number of rows.
         // You can pass in nothing, a string, or a db result
         public function numRows($arg = null)
         {
             $result = $this->resulter($arg);
-            return ($result !== false) ? mysql_num_rows($result) : false;
+			return ($result !== false) ? $result->rowCount() : false;
         }
-
+		// Returns the number of rows in the previously executed select statement
+		public function rowCountResult()
+		{
+			if(!$this->isMySQL()) { // For SQLite only.
+			if( strtoupper( substr( $this->lastQuery(), 0, 6 ) ) == 'SELECT' )
+			{
+             // Do a SELECT COUNT(*) on the previously executed query
+             $res = $this->query('SELECT COUNT(*)' . substr( $this->lastQuery(), strpos( strtoupper( $this->lastQuery() ), 'FROM' ) ) )->fetch( PDO::FETCH_NUM );
+             return $res[0];
+             }
+            }
+             else return $this->result->rowCount(); // The last query was not a SELECT query. Return the row count normally.
+		}
         // Returns true / false if the result has one or more rows
         public function hasRows($arg = null)
         {
             $result = $this->resulter($arg);
-            return is_resource($result) && (mysql_num_rows($result) > 0);
-        }
+            return is_object($result) && ($this->rowCountResult() > 0);
+		}
 
         // Returns the number of rows affected by the previous WRITE operation
         public function affectedRows()
         {
-            if(!$this->isWriteConnected()) return false;
-            return mysql_affected_rows($this->writeDB);
+            if(!$this->isConnected()) return false;
+			$ret = $this->result->rowCount();
+			return $ret;
         }
 
         // Returns the auto increment ID generated by the previous insert statement
         public function insertId()
         {
-            if(!$this->isWriteConnected()) return false;
-            return mysql_insert_id($this->writeDB);
-        }
+            if(!$this->isConnected()) return false;
+			$ret = ((is_null($this->DB->lastInsertId())) ? false : $this->DB->lastInsertId());
+			return $ret;
+		}
 
         // Returns a single value.
         // You can pass in nothing, a string, or a db result
         public function getValue($arg = null)
         {
             $result = $this->resulter($arg);
-            return $this->hasRows($result) ? mysql_result($result, 0, 0) : false;
-        }
+			return $this->hasRows($result) ? $result->fetchColumn() : false;
+		}
 
         // Returns an array of the first value in each row.
         // You can pass in nothing, a string, or a db result
@@ -178,9 +183,7 @@
             if(!$this->hasRows($result)) return array();
 
             $values = array();
-            mysql_data_seek($result, 0);
-            while($row = mysql_fetch_array($result, MYSQL_ASSOC))
-                $values[] = array_pop($row);
+			$values = $result->fetchAll((PDO::FETCH_COLUMN|PDO::FETCH_GROUP), 0);
             return $values;
         }
 
@@ -189,8 +192,8 @@
         public function getRow($arg = null)
         {
             $result = $this->resulter($arg);
-            return $this->hasRows($result) ? mysql_fetch_array($result, MYSQL_ASSOC) : false;
-        }
+			return $this->hasRows($result) ? $result->fetch(PDO::FETCH_ASSOC) : false;
+		}
 
         // Returns an array of all the rows.
         // You can pass in nothing, a string, or a db result
@@ -200,23 +203,22 @@
             if(!$this->hasRows($result)) return array();
 
             $rows = array();
-            mysql_data_seek($result, 0);
-            while($row = mysql_fetch_array($result, MYSQL_ASSOC))
-                $rows[] = $row;
+			$rows = $result->fetchAll(PDO::FETCH_ASSOC);
             return $rows;
         }
 
-        // Escapes a value and wraps it in single quotes.
+        // Same as escape()
         public function quote($var)
         {
-            return "'" . $this->escape($var) . "'";
+			return $this->escape($var);
         }
 
         // Escapes a value.
         public function escape($var)
         {
-            if(!$this->isReadConnected()) $this->readConnect();
-            return mysql_real_escape_string($var, $this->readDB);
+            if(!$this->isConnected()) $this->Connect();
+			$ret = $this->DB->quote($var);
+			return $ret;
         }
 
         public function numQueries()
@@ -243,8 +245,8 @@
                 $msg .= "Date: " . dater() . "\n";
                 $msg .= "Server: " . $_SERVER['SERVER_NAME'] . "\n";
 
-                $msg .= "ReadDB Error:\n" . mysql_error($this->readDB) . "\n\n";
-                $msg .= "WriteDB Error:\n" . mysql_error($this->writeDB) . "\n\n";
+                //$msg .= "ReadDB Error:\n" . ((is_object($this->readDB)) ? mysqli_error($this->readDB) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . "\n\n";
+                //$msg .= "WriteDB Error:\n" . ((is_object($this->writeDB)) ? mysqli_error($this->writeDB) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . "\n\n";
 
                 ob_start();
                 debug_print_backtrace();
@@ -260,9 +262,13 @@
 
             if($this->onError == 'die')
             {
-                echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Read Database Error:</strong><br/>" . mysql_error($this->readDB) . "</p>";
-                echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Write Database Error:</strong><br/>" . mysql_error($this->writeDB) . "</p>";
-                echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Last Query:</strong><br/>" . $this->lastQuery() . "</p>";
+				//echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Read Database Error:</strong><br/>" . ((is_object($this->readDB)) ? mysqli_error($this->readDB) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . "</p>";
+				//echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Write Database Error:</strong><br/>" . ((is_object($this->writeDB)) ? mysqli_error($this->writeDB) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . "</p>";
+				//$this->readDB->errorInfo();
+				//$this->writeDB->errorInfo();
+				//print_r($this->result->errorInfo());
+				echo '<br />';
+				echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Last Query:</strong><br/>" . $this->lastQuery() . "</p>";
                 echo "<pre>";
                 debug_print_backtrace();
                 echo "</pre>";
@@ -279,14 +285,14 @@
         // the correspsonding MySQL result resource or false if none available.
         private function resulter($arg = null)
         {
-            if(is_null($arg) && is_resource($this->result))
+            if(is_null($arg) && is_object($this->result))
                 return $this->result;
-            elseif(is_resource($arg))
+            elseif(is_object($arg))
                 return $arg;
             elseif(is_string($arg))
             {
                 $this->query($arg);
-                if(is_resource($this->result))
+                if(is_object($this->result))
                     return $this->result;
                 else
                     return false;

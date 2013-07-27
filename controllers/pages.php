@@ -2,7 +2,9 @@
 	class Pages extends Controller
 	{
 		function homePage( $args = false ) {
-			$this->setview("home.php");
+		
+			$this->setview("home");
+			
 		}
 		
 		function about( $args = false ) {
@@ -11,6 +13,6 @@
 		
 		
 		function notFound( $args = false) {
-			print "Not Found";
+			die("Not Found");
 		}
 	}

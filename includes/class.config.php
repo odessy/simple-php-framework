@@ -19,6 +19,7 @@
         private $localServers      = array();
 
         // Standard Config Options...
+		private $_config = array();
 
         // ...For Auth Class
         public $authDomain;         // Domain to set for the cookie
@@ -40,30 +41,32 @@
         public $useDBSessions; // Set to true to store sessions in the database
 
         // Singleton constructor
-        private function __construct()
+        private function __construct($config)
         {
+			$this->_config = $config;
+			
             $this->everywhere();
 
             $i_am_here = $this->whereAmI();
 
             if('production' == $i_am_here)
-                $this->production();
+                $this->setConfig('production');
             elseif('staging' == $i_am_here)
-                $this->staging();
+                $this->setConfig('staging');
             elseif('local' == $i_am_here)
-                $this->local();
+                $this->setConfig('local');
             elseif('shell' == $i_am_here)
-                $this->shell();
+                $this->setConfig('shell');
             else
                 die('<h1>Where am I?</h1> <p>You need to setup your server names in <code>class.config.php</code></p>
                      <p><code>$_SERVER[\'HTTP_HOST\']</code> reported <code>' . $_SERVER['HTTP_HOST'] . '</code></p>');
         }
 
         // Get Singleton object
-        public static function getConfig()
+        public static function getConfig($config = null)
         {
             if(is_null(self::$me))
-                self::$me = new Config();
+                self::$me = new Config($config);
             return self::$me;
         }
 
@@ -85,93 +88,40 @@
             $this->authSalt   = '';
         }
 
-        // Add code/variables to be run only on production servers
-        private function production()
+        // Set configuratioin to be run by server
+        private function setConfig($type)
         {
-            ini_set('display_errors', '0');
+            ini_set('display_errors', $this->_config[$type]['displayErrors']);
+			
+			if(isset($this->_config[$type]['errorReporting']))
+				ini_set($this->_config[$type]['errorReporting'], E_ALL);
+				
+				
+			//check that database name is present
+			if(empty($this->_config[$type]['dbName']))
+				die('<h1>Database Config Settings?</h1> <p>You need to setup your database name in <code>config.php</code></p>');
 
-            define('WEB_ROOT', '/');
-
-            $this->dbReadHost      = 'localhost';
-            $this->dbWriteHost     = 'localhost';
-            $this->dbName          = '';
-            $this->dbReadUsername  = '';
-            $this->dbWriteUsername = '';
-            $this->dbReadPassword  = '';
-            $this->dbWritePassword = '';
-            $this->dbOnError       = '';
-            $this->dbEmailOnError  = false;
-        }
-
-        // Add code/variables to be run only on staging servers
-        private function staging()
-        {
-            ini_set('display_errors', '1');
-            ini_set('error_reporting', E_ALL);
-
-            define('WEB_ROOT', '');
-
-            $this->dbReadHost      = 'localhost';
-            $this->dbWriteHost     = 'localhost';
-            $this->dbName          = '';
-            $this->dbReadUsername  = '';
-            $this->dbWriteUsername = '';
-            $this->dbReadPassword  = '';
-            $this->dbWritePassword = '';
-            $this->dbOnError       = 'die';
-            $this->dbEmailOnError  = false;
-        }
-
-        // Add code/variables to be run only on local (testing) servers
-        private function local()
-        {
-            ini_set('display_errors', '1');
-            ini_set('error_reporting', E_ALL);
-
-            define('WEB_ROOT', '');
-
-            $this->dbReadHost      = 'localhost';
-            $this->dbWriteHost     = 'localhost';
-            $this->dbName          = '';
-            $this->dbReadUsername  = '';
-            $this->dbWriteUsername = '';
-            $this->dbReadPassword  = '';
-            $this->dbWritePassword = '';
-            $this->dbOnError       = 'die';
-            $this->dbEmailOnError  = false;
-        }
-
-        // Add code/variables to be run only on when script is launched from the shell
-        private function shell()
-        {
-            ini_set('display_errors', '1');
-            ini_set('error_reporting', E_ALL);
-
-            define('WEB_ROOT', '');
-
-            $this->dbReadHost      = 'localhost';
-            $this->dbWriteHost     = 'localhost';
-            $this->dbName          = '';
-            $this->dbReadUsername  = '';
-            $this->dbWriteUsername = '';
-            $this->dbReadPassword  = '';
-            $this->dbWritePassword = '';
-            $this->dbOnError       = false;
-            $this->dbEmailOnError  = true;
+            $this->dbType      = $this->_config[$type]['dbType'];
+            $this->dbHost     = $this->_config[$type]['dbHost'];
+            $this->dbName          = $this->_config[$type]['dbName'];
+            $this->dbUsername  = $this->_config[$type]['dbUsername'];
+            $this->dbPassword = $this->_config[$type]['dbPassword'];
+            $this->dbOnError       = $this->_config[$type]['dbOnError'];
+            $this->dbEmailOnError  = $this->_config[$type]['dbEmailOnError'];
         }
 
         public function whereAmI()
         {
-            for($i = 0; $i < count($this->productionServers); $i++)
-                if(preg_match($this->productionServers[$i], getenv('HTTP_HOST')) === 1)
+            for($i = 0; $i < count($this->_config['Servers']['production']); $i++)
+                if(preg_match($this->_config['Servers']['production'][$i], getenv('HTTP_HOST')) === 1)
                     return 'production';
 
-            for($i = 0; $i < count($this->stagingServers); $i++)
-                if(preg_match($this->stagingServers[$i], getenv('HTTP_HOST')) === 1)
+            for($i = 0; $i < count($this->_config['Servers']['staging']); $i++)
+                if(preg_match($this->_config['Servers']['staging'][$i], getenv('HTTP_HOST')) === 1)
                     return 'staging';
 
-            for($i = 0; $i < count($this->localServers); $i++)
-                if(preg_match($this->localServers[$i], getenv('HTTP_HOST')) === 1)
+            for($i = 0; $i < count($this->_config['Servers']['local']); $i++)
+                if(preg_match($this->_config['Servers']['local'][$i], getenv('HTTP_HOST')) === 1)
                     return 'local';
 
             if(isset($_ENV['SHELL']))

@@ -1,4 +1,4 @@
-<?PHP
+<?php
     class DBSession
     {
         public static function register()
@@ -9,8 +9,8 @@
 
         public static function open()
         {
-            $db = Database::getDatabase();
-            return $db->isWriteConnected();
+            $db = Database::getInstance();
+            return $db->isConnected();
         }
 
         public static function close()
@@ -20,29 +20,30 @@
 
         public static function read($id)
         {
-            $db = Database::getDatabase();
-            $db->query('SELECT `data` FROM `sessions` WHERE `id` = :id:', array('id' => $id));
+            $db = Database::getInstance();
+            $db->query("SELECT data FROM sessions WHERE id = :id", array(':id' => $id));
             return $db->hasRows() ? $db->getValue() : '';
         }
 
         public static function write($id, $data)
         {
-            $db = Database::getDatabase();
-            $db->query('INSERT INTO `sessions` (`id`, `data`, `updated_on`) VALUES (:id:, :data:, :updated_on:) ON DUPLICATE KEY UPDATE `data` = :data:, `updated_on` = :updated_on:', array('id' => $id, 'data' => $data, 'updated_on' => time()));
+            $db = Database::getInstance();
+            $db->query("DELETE FROM sessions WHERE id = :id", array(':id' => $id));
+            $db->query("INSERT INTO sessions (id, data, updated_on) VALUES (:id, :data, :updated_on)", array(':id' => $id, ':data' => $data, ':updated_on' => time()));
             return ($db->affectedRows() == 1);
         }
 
         public static function destroy($id)
         {
-            $db = Database::getDatabase();
-            $db->query('DELETE FROM `sessions` WHERE `id` = :id:', array('id' => $id));
+            $db = Database::getInstance();
+            $db->query("DELETE FROM sessions WHERE id = :id", array(':id' => $id));
             return ($db->affectedRows() == 1);
         }
 
         public static function gc($max)
         {
-            $db = Database::getDatabase();
-            $db->query('DELETE FROM `sessions` WHERE `updated_on` < :updated_on:', array('updated_on' => time() - $max));
+            $db = Database::getInstance();
+            $db->query("DELETE FROM sessions WHERE updated_on < :updated_on", array(':updated_on' => time() - $max));
             return true;
         }
     }

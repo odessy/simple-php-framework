@@ -13,4 +13,5 @@
 	
 	$routes = array(
 		//place routes here
+		"home" => array("HOME", "homePage"),
 	);

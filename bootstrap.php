@@ -2,7 +2,7 @@
 
   function autoload_classes($class_name)
 	{
-		$file = realpath(dirname(__FILE__) .'/includes/class.' . strtolower($class_name). '.php';
+		$file = realpath(dirname(__FILE__)) .'/includes/class.' . strtolower($class_name). '.php';
 		if (file_exists($file))
 		{
 			require_once($file);

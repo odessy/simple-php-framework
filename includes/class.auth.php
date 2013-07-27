@@ -26,6 +26,7 @@
             $this->expiryDate = mktime(0, 0, 0, 6, 2, 2037);
             $this->user       = new User();
 			$this->usernameField = 'username';
+			$this->Core = new Core;
         }
 
         public static function getAuth()
@@ -48,7 +49,7 @@
         {
             $this->loggedIn = false;
 
-            $db = Database::getDatabase();
+            $db = Database::getInstance();
             $hashed_password = self::hashedPassword($password);
             $row = $db->getRow("SELECT * FROM users WHERE ". $this->usernameField ." = " . $db->quote($username) . " AND password = " . $db->quote($hashed_password));
 
@@ -100,7 +101,7 @@
 
         public function changeCurrentUsername($new_username)
         {
-            $db = Database::getDatabase();
+            $db = Database::getInstance();
             srand(time());
             $this->user->nid = Auth::newNid();
             $this->nid = $this->user->nid;
@@ -112,7 +113,7 @@
 
         public function changeCurrentPassword($new_password)
         {
-            $db = Database::getDatabase();
+            $db = Database::getInstance();
             srand(time());
             $this->user->nid = self::newNid();
             $this->user->password = self::hashedPassword($new_password);
@@ -158,7 +159,7 @@
 
         public static function createNewUser($username, $password = null)
         {
-	    $db = Database::getDatabase();
+	    $db = Database::getInstance();
 
             $user_exists = $db->getValue("SELECT COUNT(*) FROM users WHERE username = " . $db->quote($username));
             if($user_exists > 0)
@@ -271,7 +272,7 @@
             if($nid === false)
                 return false;
 
-            $db = Database::getDatabase();
+            $db = Database::getInstance();
 
             // We SELECT * so we can load the full user record into the user DBObject later
             $row = $db->getRow('SELECT * FROM users WHERE nid = ' . $db->quote($nid));
@@ -324,14 +325,15 @@
         private function sendToLoginPage()
         {
             $url = $this->loginUrl;
-
-            $full_url = full_url();
+			
+            $full_url = Core::full_url();
+			
             if(strpos($full_url, 'logout') === false)
             {
                 $url .= '?r=' . $full_url;
             }
 
-            redirect($url);
+            Core::redirect($url);
         }
 
         private static function hashedPassword($password)

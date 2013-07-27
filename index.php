@@ -2,7 +2,8 @@
 	define('WEB_ROOT', '');
     define('DS',DIRECTORY_SEPARATOR);
     define('DOC_ROOT', realpath(dirname(__FILE__) . './'));
-    //define('APPLICATION_ROOT', realpath(dirname(__FILE__) . './application/'));
+	// Application flag
+    define('SPF', true);
 	
 	//include routing
 	require DOC_ROOT.DS."config".DS."config.php";

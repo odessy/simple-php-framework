@@ -1,6 +1,4 @@
 <?php
-    // Application flag
-    define('SPF', true);
 	
 	//Configuration Array
 	$config = array();

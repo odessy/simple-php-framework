@@ -2,16 +2,24 @@
 
 	class Controller extends Route
 	{
+	
+		protected $get;
+		protected $post;
+		
 		public $_request;
 		
 		public $_view;
+		private $_view_path;
+		private $_view_data;
 		
 		public $name;
 		
-		public $_view_path;
-		
 		public function __construct()
-		{			
+		{
+
+			$this->get = $_GET;
+			$this->post = $_POST;
+			
 			if ($this->name === null) {
 				$this->name = get_class($this);
 			}
@@ -33,12 +41,20 @@
 				$view = $this->_view_path.DS.$view;
 			}
 			
-			//inlclude view
-			$view = APPLICATION_ROOT.'/views/'.$view;
+			$this->_view = DOC_ROOT.'/views/'.$view;
+
+		}
+		
+		public function view()
+		{
+			if(!file_exists($this->_view))
+				die('view file does not exist');
+				
+			$View = new View($this->_view, $this->_view_data);
 			
-			if(file_exists($view))
-				include $view;
+			$html = $View->get();
+			
+			echo $html;
 		}
 
 	}
-	

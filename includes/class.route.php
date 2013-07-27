@@ -108,7 +108,7 @@
 				//set object view
 				$call_obj->setview($call[1]);
 				//set the view path
-				$call_obj->path = implode('/', $call);
+				$call_obj->path = '/'.implode('/', $call);
 				if($this->route_call_args)
 					$call_obj->path = $call_obj->path.'/'.implode('/', $this->route_call_args);
 				//call object

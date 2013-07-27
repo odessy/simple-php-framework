@@ -1,5 +1,5 @@
 <?php
-	class Home extends Controller
+	class Pages extends Controller
 	{
 		function homePage( $args = false ) {
 			//$this->setview("page/home.php");

@@ -13,5 +13,6 @@
 	
 	$routes = array(
 		//place routes here
-		"home" => array("HOME", "homePage"),
+		//route	 =>(controller,	function)
+		"home" => array("Pages", "homePage"),
 	);

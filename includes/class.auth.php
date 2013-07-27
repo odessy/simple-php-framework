@@ -9,7 +9,7 @@
         public $username;
         public $user;
         public $expiryDate;
-        public $loginUrl = '/login.php'; // Where to direct users to login
+        public $loginUrl = '/login'; // Where to direct users to login
 		
 		public $usernameField; //field to use as the user name
 
@@ -159,9 +159,10 @@
 
         public static function createNewUser($username, $password = null)
         {
-	    $db = Database::getInstance();
+			$db = Database::getInstance();
 
             $user_exists = $db->getValue("SELECT COUNT(*) FROM users WHERE username = " . $db->quote($username));
+			
             if($user_exists > 0)
                 return false;
 

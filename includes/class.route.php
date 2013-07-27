@@ -69,7 +69,8 @@
 						}
 						else if( is_callable(array($class, 'index')) ){
 							$this->route_call[1] = 'index';
-							$this->route_call_args = (array)$paths[1];
+							if(isset($paths[1]))
+								$this->route_call_args = (array)$paths[1];
 						}
 						else
 						{
@@ -110,9 +111,15 @@
 				//set the view path
 				$call_obj->path = '/'.implode('/', $call);
 				if($this->route_call_args)
+				{
 					$call_obj->path = $call_obj->path.'/'.implode('/', $this->route_call_args);
-				//call object
-				$call_obj->$call[1]( $this->route_call_args );
+					//call object
+					$call_obj->$call[1]( $this->route_call_args );
+				}
+				else {
+					$call_obj->$call[1]();
+				}
+				
 				//initiate view for object
 				$call_obj->view();
 			}

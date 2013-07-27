@@ -22,8 +22,8 @@
 	// Add code/variables to be run only on production servers
 	$config['production'] = array(
 		'dbType'	=> 'mysql',
-        'dbHost'      => 'localhost',
-        'dbName'          => '',
+		'dbHost'      => 'localhost',
+		'dbName'          => '',
 		'dbUsername'  => '',
 		'dbPassword'  => '',
 		'dbOnError'       => '',
@@ -34,8 +34,8 @@
 	// Add code/variables to be run only on staging servers
 	$config['staging'] = array(
 		'dbType'	=> 'mysql',
-        'dbHost'      => 'localhost',
-        'dbName'          => '',
+		'dbHost'      => 'localhost',
+		'dbName'          => '',
 		'dbUsername'  => '',
 		'dbPassword'  => '',
 		'dbEmailOnError'  => 'die',
@@ -46,8 +46,8 @@
 	// Add code/variables to be run only on local (testing) servers
 	$config['local'] = array(
 		'dbType'	=> 'mysql',
-        'dbHost'      => 'localhost',
-        'dbName'          => '',
+		'dbHost'      => 'localhost',
+		'dbName'          => '',
 		'dbUsername'  => 'root',
 		'dbPassword'  => '',
 		'dbOnError'       => '',
@@ -59,8 +59,8 @@
 	// Add code/variables to be run only on when script is launched from the shell
 	$config['shell'] = array(
 		'dbType'	=> 'mysql',
-        'dbHost'      => 'localhost',
-        'dbName'          => '',
+		'dbHost'      => 'localhost',
+		'dbName'          => '',
 		'dbUsername'  => '',
 		'dbPassword'  => '',
 		'dbOnError'       => false,

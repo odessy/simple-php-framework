@@ -1,9 +1,9 @@
 <?php
 
-	//include routing
-	require "./config.php";
-	require "./bootstrap.php";
-	require "./routes.php";
+    //include routing
+    require "./config.php";
+    require "./bootstrap.php";
+    require "./routes.php";
 	
     // Fix magic quotes
     if(get_magic_quotes_gpc())
@@ -25,11 +25,11 @@
     session_name('spfs');
     session_start();
 	
-	//initiate route
-	$route = new Route();
-	$route->setRoutes( $routes );
-	if(!isset($_GET['_route_']))$_GET['_route_'] = "/"; //prevent notice error from appearing
-	$route->routeURL( preg_replace( "|/$|", "", $_GET['_route_'] ) );
+    //initiate route
+    $route = new Route();
+    $route->setRoutes( $routes );
+    if(!isset($_GET['_route_']))$_GET['_route_'] = "/"; //prevent notice error from appearing
+    $route->routeURL( preg_replace( "|/$|", "", $_GET['_route_'] ) );
 	
     // Initialize current user
     $Auth = Auth::getAuth();

@@ -45,7 +45,7 @@
             } else if($this->type=='sqlite') {
 			$this->DB = false;
 		    } else {
-			die('Unsupported database type specified in class.config.php');
+			die('Unsupported database type specified in config.php');
 		     }
         }
 
@@ -263,17 +263,17 @@
 
             if($this->onError == 'die')
             {
-				//echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Read Database Error:</strong><br/>" . ((is_object($this->readDB)) ? mysqli_error($this->readDB) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . "</p>";
-				//echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Write Database Error:</strong><br/>" . ((is_object($this->writeDB)) ? mysqli_error($this->writeDB) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . "</p>";
-				//$this->readDB->errorInfo();
-				//$this->writeDB->errorInfo();
-				//print_r($this->result->errorInfo());
-				echo '<br />';
-				echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Last Query:</strong><br/>" . $this->lastQuery() . "</p>";
-                echo "<pre>";
-                debug_print_backtrace();
-                echo "</pre>";
-                exit;
+		//echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Read Database Error:</strong><br/>" . ((is_object($this->readDB)) ? mysqli_error($this->readDB) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . "</p>";
+		//echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Write Database Error:</strong><br/>" . ((is_object($this->writeDB)) ? mysqli_error($this->writeDB) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . "</p>";
+		//$this->readDB->errorInfo();
+		//$this->writeDB->errorInfo();
+		//print_r($this->result->errorInfo());
+		echo '<br />';
+		echo "<p style='border:5px solid red;background-color:#fff;padding:5px;'><strong>Last Query:</strong><br/>" . $this->lastQuery() . "</p>";
+		echo "<pre>";
+		debug_print_backtrace();
+		echo "</pre>";
+		exit;
             }
 
             if($this->onError == 'redirect')

@@ -3,7 +3,7 @@
 	{
 		function homePage( $args = false ) {
 			//$this->setview("home.php");
-			print "This is the home page.".$this->name;
+			print "This is the home page.";
 		}
 		
 		function aboutPage( $args = false ) {

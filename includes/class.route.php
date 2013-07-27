@@ -1,5 +1,5 @@
 <?php
-	class Route extends Controller{
+	class Route extends Auth{
 	
 		protected $route_match      = false;
 		protected $route_call       = false;
@@ -8,7 +8,7 @@
 		protected $routes           = array( );
 	 
 		public function __construct( ) {
-	 
+			parent::__construct();
 		} // function __construct( )
 	 
 		public function setRoutes( $routes ) {
@@ -54,34 +54,32 @@
 	 
 		} // function routeURL( )
 		
-		public function file_get_php_classes($filepath) {
-		  $php_code = file_get_contents($filepath);
-		  $classes = get_php_classes($php_code);
-		  return $classes;
-		}
+		// public function file_get_php_classes($filepath) {
+		  // $php_code = file_get_contents($filepath);
+		  // $classes = get_php_classes($php_code);
+		  // return $classes;
+		// }
 
-		public function get_php_classes($php_code) {
-		  $classes = array();
-		  $tokens = token_get_all($php_code);
-		  $count = count($tokens);
-		  for ($i = 2; $i < $count; $i++) {
-			if ( $tokens[$i - 2][0] == T_CLASS
-				&& $tokens[$i - 1][0] == T_WHITESPACE
-				&& $tokens[$i][0] == T_STRING) {
+		// public function get_php_classes($php_code) {
+		  // $classes = array();
+		  // $tokens = token_get_all($php_code);
+		  // $count = count($tokens);
+		  // for ($i = 2; $i < $count; $i++) {
+			// if ( $tokens[$i - 2][0] == T_CLASS
+				// && $tokens[$i - 1][0] == T_WHITESPACE
+				// && $tokens[$i][0] == T_STRING) {
 
-				$class_name = $tokens[$i][1];
-				$classes[] = $class_name;
-			}
-		  }
-		  return $classes;
-		}
+				// $class_name = $tokens[$i][1];
+				// $classes[] = $class_name;
+			// }
+		  // }
+		  // return $classes;
+		// }
 	 
 		private function callRoute( ) {
 			$call = $this->route_call;
 	 
 			if( is_array( $call ) ) {
-				//set view for function
-				$this->setview($call[0].DS.$call[1].'.php');
 				$call_obj = new $call[0]( );
 				$call_obj->$call[1]( $this->route_call_args );
 			}

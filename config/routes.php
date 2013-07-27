@@ -1,6 +1,7 @@
 <?php
-  /**
-	*  routes in $routes array variable
+	/**
+	*  Routes are automatically generated aditional 
+	*  routes can be specified $routes array variable
 	*/
 	
 	//example
@@ -14,5 +15,5 @@
 	$routes = array(
 		//place routes here
 		//route	 =>(controller,	function)
-		"home" => array("Pages", "homePage"),
+		//"home" => array("Pages", "homePage"),
 	);

@@ -1,0 +1,1 @@
+the contents inside the home page

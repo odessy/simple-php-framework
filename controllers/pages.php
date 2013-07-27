@@ -2,8 +2,8 @@
 	class Pages extends Controller
 	{
 		function homePage( $args = false ) {
-			//$this->setview("page/home.php");
-			print "This is the home page.";
+			//$this->setview("home.php");
+			print "This is the home page.".$this->name;
 		}
 		
 		function aboutPage( $args = false ) {

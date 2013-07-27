@@ -10,6 +10,8 @@
         public $user;
         public $expiryDate;
         public $loginUrl = '/login.php'; // Where to direct users to login
+		
+		public $usernameField; //field to use as the user name
 
         private $nid;
         private $loggedIn;
@@ -23,6 +25,7 @@
             $this->loggedIn   = false;
             $this->expiryDate = mktime(0, 0, 0, 6, 2, 2037);
             $this->user       = new User();
+			$this->usernameField = 'username';
         }
 
         public static function getAuth()
@@ -47,14 +50,14 @@
 
             $db = Database::getDatabase();
             $hashed_password = self::hashedPassword($password);
-            $row = $db->getRow("SELECT * FROM users WHERE username = " . $db->quote($username) . " AND password = " . $db->quote($hashed_password));
+            $row = $db->getRow("SELECT * FROM users WHERE ". $this->usernameField ." = " . $db->quote($username) . " AND password = " . $db->quote($hashed_password));
 
             if($row === false)
                 return false;
 
             $this->id       = $row['id'];
             $this->nid      = $row['nid'];
-            $this->username = $row['username'];
+            $this->username = $row[$this->usernameField];
             $this->user     = new User();
             $this->user->id = $this->id;
             $this->user->load($row);

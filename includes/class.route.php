@@ -32,7 +32,7 @@
 				}
 	 
 				preg_match( "|{$path}/(.*)$|i", $url, $match );
-				if( !empty( $match[1] ) ) {					
+				if( !empty( $match[1] ) ) {
 					$this->route_match = $path;
 					$this->route_call = $call;
 					$this->route_call_args = explode( "/", $match[1] );
@@ -56,6 +56,7 @@
 					if (class_exists($paths[0])) {
 					
 						$class = new $paths[0];
+						
 						
 						if(isset($paths[1]) && is_callable(array($class, $paths[1]))){
 							
@@ -102,8 +103,11 @@
 		private function callRoute( ) {
 			$call = $this->route_call;
 	 
-			if( is_array( $call ) ) {				
+			if( is_array( $call ) ) {
 				$call_obj = new $call[0]( );
+				//set object view
+				$call_obj->setview($call[1]);
+				//call object
 				$call_obj->$call[1]( $this->route_call_args );
 				//initiate view for object
 				$call_obj->view();

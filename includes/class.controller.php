@@ -1,6 +1,6 @@
 <?php
 
-	class Controller extends Route
+	class Controller extends Auth
 	{
 	
 		protected $get;

@@ -30,8 +30,6 @@
     session_name('spfs');
     session_start();
 	
-    // Initialize current user
-    $Auth = Auth::getAuth();
 	
 	//initiate route
 	$route = new Route();

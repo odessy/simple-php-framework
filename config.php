@@ -1,10 +1,10 @@
 <?php
-    // Application flag
-    define('SPF', true);
+	// Application flag
+	define('SPF', true);
 	define('WEB_ROOT', '');
-    defined('DS') ? null : define('DS',DIRECTORY_SEPARATOR);
-    define('DOC_ROOT', realpath(dirname(__FILE__) . './'));
-    define('APPLICATION_ROOT', realpath(dirname(__FILE__) . './application/'));
+	defined('DS') ? null : define('DS',DIRECTORY_SEPARATOR);
+	define('DOC_ROOT', realpath(dirname(__FILE__) . './'));
+	define('APPLICATION_ROOT', realpath(dirname(__FILE__) . './application/'));
 	
 	//Configuration Array
 	$config = array();

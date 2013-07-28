@@ -15,5 +15,7 @@
 	$routes = array(
 		//place routes here
 		//route	 =>(controller,	function)
-		//"home" => array("Pages", "homePage"),
+		"login" => array("users", "login"),
+		"register" => array("users", "register"),
+		"logout" => array("users", "logout"),
 	);

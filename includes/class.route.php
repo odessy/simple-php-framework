@@ -32,6 +32,7 @@
 				}
 	 
 				preg_match( "|{$path}/(.*)$|i", $url, $match );
+
 				if( !empty( $match[1] ) ) {
 					$this->route_match = $path;
 					$this->route_call = $call;
@@ -41,7 +42,6 @@
 					return true;
 				} // if
 			} // foreach
-	 
 	 
 			// If no match was found, call the default route if there is one
 			if( $this->route_call === false ) {
@@ -56,7 +56,6 @@
 					if (class_exists($paths[0])) {
 					
 						$class = new $paths[0];
-						
 						
 						if(isset($paths[1]) && is_callable(array($class, $paths[1]))){
 							
@@ -77,19 +76,16 @@
 							return $this->notFound();
 						}
 						
-						
 						$this->callRoute( );
-						return true;
-							
-					
+
+						return true;	
 					}
-				
 				}
 			}
 			
 			return $this->notFound();
 	 
-		} // function routeURL( )
+		} // function routeURL
 		
 		
 		private function notFound() {
@@ -98,16 +94,21 @@
 				$this->callRoute( );
 				return true;
 			}
-		}
+			
+		    header('HTTP/1.0 404 Not Found');
+		    echo "<h1>404 Not Found</h1>";
+		    echo "The page that you have requested could not be found.";
+
+			return false;
+		} // function notFound
 		
 	 
 		private function callRoute( ) {
+
 			$call = $this->route_call;
 	 
 			if( is_array( $call ) ) {
 				$call_obj = new $call[0]( );
-				//set object view
-				$call_obj->setview($call[1]);
 				//set the view path
 				$call_obj->path = '/'.implode('/', $call);
 				if($this->route_call_args)

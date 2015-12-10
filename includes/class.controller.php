@@ -2,14 +2,12 @@
 
 	class Controller extends Core
 	{
-	
-		protected $get;
-		protected $post;
+		protected $input;
 		
 		public $_request;
 		public $view_ext = 'tp.php';
 		
-		public $layout;
+		private $_layout;
 		
 		public $_view;
 		private $_view_path;
@@ -26,8 +24,8 @@
 		public function __construct()
 		{
 
-			$this->get = $_GET;
-			$this->post = $_POST;
+			//Initialize an input class
+			$this->input = new Input();
 			
 			if ($this->name === null) {
 				$this->name = get_class($this);
@@ -36,18 +34,14 @@
 			$this->_view_path = strtolower($this->name);
 			
 			//set default template file
-			$this->layout = 'default';
+			$this->setLayout('default');
 			
 			// Initialize current user
 			$this->Auth = Auth::getAuth();
 		}
-		
-		public function request()
-		{
-			
-		}
-		
-		public function setview($view)
+
+
+		public function setView($view)
 		{
 			$view = $view.'.'.$this->view_ext;
 			
@@ -58,6 +52,18 @@
 		
 			$this->_view = DOC_ROOT.'/views/'.$view;
 
+		}
+		
+		public function setLayout($view)
+		{
+			$layout = $view.'.'.$this->view_ext;
+			
+			$this->_layout = DOC_ROOT.'/views/layouts'.DS.$layout;
+		}
+
+		public function setData($key, $value)
+		{
+			$this->_view_data[$key] = $value;
 		}
 		
 		public function view()
@@ -71,13 +77,11 @@
 				
 			$View = new View($this->_view, $this->_view_data);
 			$this->_view_data['content'] = $View->get();
-			
-			$layout = DOC_ROOT.'/views/layouts'.DS.$this->layout.'.'.$this->view_ext;
-			
-			if(!file_exists($layout))
+
+			if(!file_exists($this->_layout))
 				die('layout file does not exist');
 			
-			$LayoutView = new View($layout, $this->_view_data);
+			$LayoutView = new View($this->_layout, $this->_view_data);
 			
 			$html = $LayoutView->get();
 			
